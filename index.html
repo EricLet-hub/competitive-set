@@ -365,29 +365,15 @@ async function runScoring(){
 
     setLS(4);
 
-    // Scoring IA
-    const list=selected.map(h=>{
+    // Scoring algorithmique gratuit
+    const hotelsForScoring=selected.map(h=>{
       const det=detailsMap[h.name]||{};
-      const price=det.lowest_price||0;
-      const ams=(det.amenities||[]).slice(0,6).join(', ');
-      return `"${(h.name||'').replace(/"/g,'')}" (${h.isReference?'REFERENCE':'concurrent'}, ${price}EUR, note ${h.overall_rating||det.overall_rating||'?'}/5, equipements: ${ams||'non specifie'})`;
-    }).join('\n');
-
-    const prompt=`Score ces hotels. Tableau JSON uniquement sans texte.
-Hotels:
-${list}
-Format: [{"name":"NOM_EXACT","score":{"rating":N,"location":N,"roomSize":N,"amenities":N,"competitive":N},"details":{"locationDesc":"SANS_APOSTROPHE","roomSizeSqm":N,"advantage":"SANS_APOSTROPHE"}}]
-Baremes: rating 0-30, location 0-25, roomSize 0-15, amenities 0-20 (piscine+6,resto+5,reunion+5,spa+4,parking+2,fitness+2), competitive 0-10. roomSizeSqm 14-50. Noms identiques.`;
-
-    const ar=await fetch('/api/hotels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'score',hotels:list})});
+      return{name:h.name,overall_rating:h.overall_rating||det.overall_rating||null,address:h.address||null,amenities:det.amenities||h.amenities||[],isReference:h.isReference};
+    });
+    const ar=await fetch('/api/hotels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'score',hotels:hotelsForScoring})});
     const ad=await ar.json();
     if(ad.error)throw new Error('Scoring : '+ad.error);
-    let t=JSON.stringify(ad.scored);
-    t=t.replace(/```json/gi,'').replace(/```/g,'').trim();
-    const fi=t.indexOf('['),li=t.lastIndexOf(']');
-    if(fi!==-1&&li!==-1)t=t.substring(fi,li+1);
-    t=t.replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
-    let sc;try{sc=JSON.parse(t);}catch(e){throw new Error('Scoring invalide, réessayez.');}
+    const sc=ad.scored||[];
 
     // Construire scoredHotels avec tous les prix OTA
     scoredHotels=selected.map((h,i)=>{
