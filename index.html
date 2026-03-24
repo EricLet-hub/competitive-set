@@ -581,12 +581,12 @@ async function doFix(){
   resultEl.className = 'fix-result';
   resultEl.textContent = '⏳ Recherche en cours…';
   try {
-    // Chercher par nom dans Google Hotels
-    const r = await fetch(`/api/hotels?action=search&q=${encodeURIComponent(query)}&check_in_date=${ci}&check_out_date=${co}&api_key=${key}`);
+    // Chercher directement dans Google Hotels par nom exact
+    const r = await fetch(`/api/hotels?action=hotelsearch&q=${encodeURIComponent(query)}&check_in_date=${ci}&check_out_date=${co}&api_key=${key}`);
     const data = await r.json();
     if(data.error) throw new Error(data.error);
     const found = data.properties?.[0];
-    if(!found || !found.property_token) throw new Error('Aucun token trouvé pour ce nom.');
+    if(!found || !found.property_token) throw new Error('Aucun token trouvé pour ce nom. Essayez sans accent ni article : "Novotel Valence Sud"');
 
     // Vérifier que ce token n'est pas déjà utilisé par un autre hôtel
     const duplicate = rawHotels.find((h,i) => i !== fixIdx && h.property_token === found.property_token);
