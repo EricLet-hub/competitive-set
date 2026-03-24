@@ -27,7 +27,15 @@ export default async function handler(req, res) {
       });
       const hotelsList = hotelsSearch.properties || [];
 
-      // Appel 2: Google Local pour localiser l'hôtel de référence précisément
+      // Appel 2: Google Hotels sur le nom exact de la référence → token fiable
+      const refSearch = await serpFetch({
+        engine: 'google_hotels', q,
+        check_in_date: ci, check_out_date: co,
+        adults: '2', currency: 'EUR', hl: 'fr', gl: 'fr', api_key
+      });
+      const refHotelsResults = refSearch.properties || [];
+
+      // Appel 3: Google Local pour localiser l'hôtel de référence précisément
       const localRef = await serpFetch({ engine: 'google_local', q, hl: 'fr', gl: 'fr', api_key });
       const ref = localRef.local_results?.[0] || {};
       const refLat = ref.gps_coordinates?.latitude;
@@ -47,21 +55,23 @@ export default async function handler(req, res) {
       }
 
       const refNameNorm = normName(ref.title || q);
-      // Chercher le meilleur match dans Google Hotels pour la référence
-      let refHotelData = hotelsList.find(h => {
-        const hn = normName(h.name);
-        return hn === refNameNorm;
-      });
+
+      // Chercher d'abord dans les résultats dédiés (recherche par nom exact)
+      let refHotelData = refHotelsResults[0] || null;
+
+      // Si pas trouvé, chercher dans la liste générale
       if (!refHotelData) {
-        // Match partiel : chercher par mots clés significatifs
+        refHotelData = hotelsList.find(h => normName(h.name) === refNameNorm);
+      }
+      if (!refHotelData) {
         const refWords = refNameNorm.split(' ').filter(w => w.length > 3);
         let bestScore = 0;
-        for (const h of hotelsList) {
+        for (const h of [...refHotelsResults, ...hotelsList]) {
           const hn = normName(h.name);
           const hw = hn.split(' ').filter(w => w.length > 3);
           const common = refWords.filter(w => hw.includes(w)).length;
           const score = common / Math.max(refWords.length, hw.length, 1);
-          if (score > bestScore && score >= 0.6) {
+          if (score > bestScore && score >= 0.5) {
             bestScore = score;
             refHotelData = h;
           }
@@ -82,13 +92,17 @@ export default async function handler(req, res) {
       const competitors = [];
       const exclude = /camping|auberge|hostel|gite|résidence|appartement|studio/i;
 
+      // Tokens de la référence à exclure des concurrents
+      const refTokens = new Set(refHotelsResults.slice(0,3).map(h => h.property_token).filter(Boolean));
+      if (refHotelData?.property_token) refTokens.add(refHotelData.property_token);
+
       // D'abord tous les hôtels Google Hotels (tokens 100% fiables)
       for (const h of hotelsList) {
         if (competitors.length >= 12) break;
         const n = normName(h.name);
-        // Exclure la référence
+        // Exclure la référence et ses tokens
         if (n === normName(refHotel.name)) continue;
-        if (refHotelData && h.property_token === refHotelData.property_token) continue;
+        if (refTokens.has(h.property_token)) continue;
         if (seen.has(n)) continue;
         if (exclude.test(h.name)) continue;
         seen.add(n);
