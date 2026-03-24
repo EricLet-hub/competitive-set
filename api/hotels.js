@@ -1,12 +1,14 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { action, q, property_token, check_in_date, check_out_date, api_key } = req.query;
-  if (!api_key) return res.status(400).json({ error: 'Clé API manquante' });
+  const { action, q, property_token, check_in_date, check_out_date, api_key } = req.method === 'POST'
+    ? req.body || {}
+    : req.query;
+
+  if (!api_key && action !== 'score') return res.status(400).json({ error: 'Clé API manquante' });
 
   try {
 
@@ -17,19 +19,16 @@ export default async function handler(req, res) {
       const words = q.trim().split(' ');
       const city = words.slice(-2).join(' ');
 
-      // Appel 1 : Google Local pour localiser l'hôtel de référence
       const localRef = await serpFetch({ engine: 'google_local', q, hl: 'fr', gl: 'fr', api_key });
       const ref = localRef.local_results?.[0] || {};
       const refLat = ref.gps_coordinates?.latitude;
       const refLng = ref.gps_coordinates?.longitude;
 
-      // Appel 2 : Google Local zone pour les concurrents
       const zoneQ = { engine: 'google_local', q: `hotel ${city}`, hl: 'fr', gl: 'fr', api_key };
       if (refLat && refLng) zoneQ.ll = `@${refLat},${refLng},13z`;
       const zoneData = await serpFetch(zoneQ);
       const zoneResults = zoneData.local_results || [];
 
-      // Appel 3 : Google Hotels search sur la ville pour récupérer les property_token
       const hotelsSearch = await serpFetch({
         engine: 'google_hotels',
         q: `hotels ${city}`,
@@ -60,29 +59,22 @@ export default async function handler(req, res) {
 
       function findRating(name) {
         const n = norm(name);
-        const match = hotelsList.find(h => {
-          const hn = norm(h.name || '');
-          return hn.includes(n) || n.includes(hn);
-        });
+        const match = hotelsList.find(h => norm(h.name || '').includes(n) || n.includes(norm(h.name || '')));
         return match?.overall_rating || null;
       }
 
-      // Construire hôtel de référence
       const refHotel = {
         name: ref.title || q,
         overall_rating: ref.rating || findRating(ref.title || q),
         address: ref.address || null,
         property_token: findToken(ref.title || q),
-        gps_coordinates: ref.gps_coordinates || null,
         isReference: true
       };
 
-      // Construire concurrents
       const exclude = /camping|auberge|hostel|gite|chambre d'hôtes|résidence|appartement|studio/i;
       const seen = new Set([norm(refHotel.name)]);
       const competitors = [];
 
-      // D'abord depuis Google Hotels (ont déjà les tokens)
       for (const h of hotelsList) {
         if (competitors.length >= 12) break;
         const n = norm(h.name);
@@ -98,7 +90,6 @@ export default async function handler(req, res) {
         });
       }
 
-      // Compléter avec Google Local
       for (const h of zoneResults) {
         if (competitors.length >= 12) break;
         const n = norm(h.title);
@@ -132,8 +123,7 @@ export default async function handler(req, res) {
       const prop = data.properties?.[0] || {};
       const prices = (prop.prices || []).map(p => ({
         source: p.source,
-        price: p.rate_per_night?.extracted_lowest || null,
-        logo: p.logo || null
+        price: p.rate_per_night?.extracted_lowest || null
       })).filter(p => p.price);
 
       return res.status(200).json({
@@ -141,9 +131,46 @@ export default async function handler(req, res) {
         overall_rating: prop.overall_rating || null,
         lowest_price: prices.length ? Math.min(...prices.map(p => p.price)) : null,
         prices,
-        amenities: prop.amenities || [],
-        typical_price_range: prop.typical_price_range || null
+        amenities: prop.amenities || []
       });
+    }
+
+    // ── ACTION: score ── proxy vers Anthropic (évite CORS) ─────────────────
+    if (action === 'score') {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
+      const body = req.body;
+      if (!body || !body.hotels) return res.status(400).json({ error: 'Paramètres manquants' });
+
+      const prompt = `Score ces hotels. Tableau JSON uniquement sans texte.
+Hotels:
+${body.hotels}
+Format: [{"name":"NOM_EXACT","score":{"rating":N,"location":N,"roomSize":N,"amenities":N,"competitive":N},"details":{"locationDesc":"SANS_APOSTROPHE","roomSizeSqm":N,"advantage":"SANS_APOSTROPHE"}}]
+Baremes: rating 0-30, location 0-25, roomSize 0-15, amenities 0-20 (piscine+6,resto+5,reunion+5,spa+4,parking+2,fitness+2), competitive 0-10. roomSizeSqm 14-50. Noms identiques.`;
+
+      const ar = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY || '', 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: 'Tableau JSON uniquement, minifie, sans texte.',
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const ad = await ar.json();
+      let t = (ad.content || []).map(x => x.text || '').join('');
+      t = t.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const fi = t.indexOf('['), li = t.lastIndexOf(']');
+      if (fi !== -1 && li !== -1) t = t.substring(fi, li + 1);
+      t = t.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+
+      try {
+        const scored = JSON.parse(t);
+        return res.status(200).json({ scored });
+      } catch (e) {
+        return res.status(500).json({ error: 'Scoring invalide', raw: t.substring(0, 200) });
+      }
     }
 
     return res.status(400).json({ error: `Action inconnue: ${action}` });
