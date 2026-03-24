@@ -9,76 +9,93 @@ export default async function handler(req, res) {
 
   try {
 
-    // ACTION: search
+    // ACTION: search — trouve les hôtels de la zone
     if (action === 'search' || !action) {
       if (!api_key) return res.status(400).json({ error: 'Clé API manquante' });
       if (!q) return res.status(400).json({ error: 'Paramètre q manquant' });
 
       const words = q.trim().split(' ');
       const city = words.slice(-2).join(' ');
+      const ci = check_in_date || getTomorrow(7);
+      const co = check_out_date || getTomorrow(8);
 
+      // Appel 1: Google Local — localiser l'hôtel de référence
       const localRef = await serpFetch({ engine: 'google_local', q, hl: 'fr', gl: 'fr', api_key });
       const ref = localRef.local_results?.[0] || {};
       const refLat = ref.gps_coordinates?.latitude;
       const refLng = ref.gps_coordinates?.longitude;
 
+      // Appel 2: Google Local zone — concurrents autour
       const zoneQ = { engine: 'google_local', q: `hotel ${city}`, hl: 'fr', gl: 'fr', api_key };
       if (refLat && refLng) zoneQ.ll = `@${refLat},${refLng},13z`;
       const zoneData = await serpFetch(zoneQ);
       const zoneResults = zoneData.local_results || [];
 
+      // Appel 3: Google Hotels sur la ville — récupère tokens ET prix
       const hotelsSearch = await serpFetch({
-        engine: 'google_hotels',
-        q: `hotels ${city}`,
-        check_in_date: check_in_date || getTomorrow(7),
-        check_out_date: check_out_date || getTomorrow(8),
+        engine: 'google_hotels', q: `hotels ${city}`,
+        check_in_date: ci, check_out_date: co,
         adults: '2', currency: 'EUR', hl: 'fr', gl: 'fr', api_key
       });
       const hotelsList = hotelsSearch.properties || [];
 
-      function norm(s) {
+      // Index des tokens par nom normalisé — matching STRICT (garde la marque)
+      function normStrict(s) {
         return (s || '').toLowerCase()
           .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .replace(/hotel|hôtel|ibis|novotel|mercure|campanile|kyriad|formule|premiere|classe|b&b|bb/gi, '')
-          .replace(/\s+/g, ' ').trim();
-      }
-      function findToken(name) {
-        const n = norm(name);
-        const match = hotelsList.find(h => {
-          const hn = norm(h.name || '');
-          if (hn.includes(n) || n.includes(hn)) return true;
-          const w1 = n.split(' ').filter(w => w.length > 2);
-          const w2 = hn.split(' ').filter(w => w.length > 2);
-          return w1.filter(w => w2.includes(w)).length >= 2;
-        });
-        return match?.property_token || null;
-      }
-      function findRating(name) {
-        const n = norm(name);
-        const match = hotelsList.find(h => {
-          const hn = norm(h.name || '');
-          return hn.includes(n) || n.includes(hn);
-        });
-        return match?.overall_rating || null;
+          .replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
       }
 
+      // Pour chaque hôtel de Google Hotels, on garde son token associé à son nom exact
+      const tokenIndex = {};
+      for (const h of hotelsList) {
+        if (h.property_token && h.name) {
+          tokenIndex[normStrict(h.name)] = { token: h.property_token, rating: h.overall_rating };
+        }
+      }
+
+      // Recherche du bon token : matching strict d'abord, puis par mots significatifs
+      function findBestToken(name) {
+        const n = normStrict(name);
+        // 1. Exact match
+        if (tokenIndex[n]) return tokenIndex[n];
+        // 2. Match par mots significatifs (longueur > 3, GARDE la marque)
+        const words1 = n.split(' ').filter(w => w.length > 3);
+        let bestMatch = null, bestScore = 0;
+        for (const [key, val] of Object.entries(tokenIndex)) {
+          const words2 = key.split(' ').filter(w => w.length > 3);
+          const common = words1.filter(w => words2.includes(w)).length;
+          // Score basé sur proportion de mots communs
+          const score = common / Math.max(words1.length, words2.length);
+          if (score > bestScore && score >= 0.5) {
+            bestScore = score;
+            bestMatch = val;
+          }
+        }
+        return bestMatch;
+      }
+
+      const refMatch = findBestToken(ref.title || q);
       const refHotel = {
         name: ref.title || q,
-        overall_rating: ref.rating || findRating(ref.title || q),
+        overall_rating: ref.rating || refMatch?.rating || null,
         address: ref.address || null,
-        property_token: findToken(ref.title || q),
+        property_token: refMatch?.token || null,
         isReference: true
       };
 
       const exclude = /camping|auberge|hostel|gite|chambre d'hôtes|résidence|appartement|studio/i;
-      const seen = new Set([norm(refHotel.name)]);
+      const seen = new Set([normStrict(refHotel.name)]);
       const competitors = [];
 
+      // D'abord les hôtels Google Hotels (ont des tokens fiables)
       for (const h of hotelsList) {
         if (competitors.length >= 12) break;
-        const n = norm(h.name);
-        const refN = norm(refHotel.name);
-        if (seen.has(n) || n.includes(refN) || refN.includes(n)) continue;
+        const n = normStrict(h.name);
+        const refN = normStrict(refHotel.name);
+        if (seen.has(n)) continue;
+        // Éviter de dupliquer l'hôtel de référence
+        if (n === refN || (n.includes(refN.split(' ')[0]) && refN.includes(n.split(' ')[0]))) continue;
         seen.add(n);
         competitors.push({
           name: h.name,
@@ -89,17 +106,19 @@ export default async function handler(req, res) {
         });
       }
 
+      // Compléter avec Google Local
       for (const h of zoneResults) {
         if (competitors.length >= 12) break;
-        const n = norm(h.title);
+        const n = normStrict(h.title);
         if (seen.has(n)) continue;
         if (exclude.test(h.title) || exclude.test(h.type || '')) continue;
         seen.add(n);
+        const match = findBestToken(h.title);
         competitors.push({
           name: h.title,
-          overall_rating: h.rating || findRating(h.title),
+          overall_rating: h.rating || match?.rating || null,
           address: h.address || null,
-          property_token: findToken(h.title),
+          property_token: match?.token || null,
           isReference: false
         });
       }
@@ -107,7 +126,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ properties: [refHotel, ...competitors] });
     }
 
-    // ACTION: details
+    // ACTION: details — prix par OTA pour un hôtel via son property_token
     if (action === 'details') {
       if (!api_key) return res.status(400).json({ error: 'Clé API manquante' });
       if (!property_token) return res.status(400).json({ error: 'property_token manquant' });
@@ -121,19 +140,13 @@ export default async function handler(req, res) {
         adults: '2', currency: 'EUR', hl: 'fr', gl: 'fr', api_key
       });
 
-      console.log('Details response keys:', Object.keys(data));
-      console.log('Properties count:', data.properties?.length);
-
-      // Les prix peuvent être dans properties[0].prices ou directement dans prices
       const prop = data.properties?.[0] || {};
       const rawPrices = prop.prices || data.prices || [];
-      
       const prices = rawPrices.map(p => ({
         source: p.source,
         price: p.rate_per_night?.extracted_lowest || null
       })).filter(p => p.price);
 
-      // Fallback: si pas de prices, chercher rate_per_night directement
       if (prices.length === 0 && prop.rate_per_night?.extracted_lowest) {
         prices.push({ source: 'Google Hotels', price: prop.rate_per_night.extracted_lowest });
       }
@@ -143,12 +156,11 @@ export default async function handler(req, res) {
         overall_rating: prop.overall_rating || null,
         lowest_price: prices.length ? Math.min(...prices.map(p => p.price)) : null,
         prices,
-        amenities: prop.amenities || [],
-        debug_keys: Object.keys(data)
+        amenities: prop.amenities || []
       });
     }
 
-    // ACTION: score — scoring algorithmique 100% gratuit, basé sur les données Google
+    // ACTION: score — scoring algorithmique gratuit
     if (action === 'score') {
       if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
       const body = req.body || {};
@@ -160,24 +172,20 @@ export default async function handler(req, res) {
         const name = (h.name || '').toLowerCase();
         const address = (h.address || '').toLowerCase();
 
-        // RATING: 0-30 pts
         const ratingScore = Math.min(30, Math.round((googleRating / 5) * 30));
 
-        // LOCATION: 0-25 pts
         let locationScore = 14;
         if (/centre|center|gare|historique|coeur|hyper/i.test(name + address)) locationScore = 22;
         else if (/nord|sud|est|ouest|peripherie|zone|commercial/i.test(name + address)) locationScore = 12;
         else if (/aeroport|airport|autoroute/i.test(name + address)) locationScore = 8;
 
-        // ROOM SIZE: 0-15 pts
         let roomScore = 9;
         if (/formule|premiere classe|etap|\bf1\b/i.test(name)) roomScore = 5;
-        else if (/ibis budget|b&b|bb hotel/i.test(name)) roomScore = 7;
-        else if (/ibis|campanile|kyriad|comfort/i.test(name)) roomScore = 9;
-        else if (/mercure|novotel|best western|holiday inn|crowne/i.test(name)) roomScore = 12;
+        else if (/ibis budget|b&b|bb hotel|first/i.test(name)) roomScore = 7;
+        else if (/ibis|campanile|kyriad|comfort|logis/i.test(name)) roomScore = 9;
+        else if (/mercure|novotel|best western|holiday inn|crowne|ace/i.test(name)) roomScore = 12;
         else if (/pullman|hilton|marriott|hyatt|sheraton|sofitel|intercontinental/i.test(name)) roomScore = 15;
 
-        // AMENITIES: 0-20 pts
         let amenScore = 0;
         const amStr = amenities.join(' ').toLowerCase();
         if (/pool|piscine/i.test(amStr)) amenScore += 6;
@@ -188,10 +196,8 @@ export default async function handler(req, res) {
         if (/fitness|gym/i.test(amStr)) amenScore += 2;
         amenScore = Math.min(20, amenScore);
 
-        // COMPETITIVE: 0-10 pts
         const compScore = googleRating >= 4.5 ? 9 : googleRating >= 4.0 ? 7 : googleRating >= 3.5 ? 5 : 3;
 
-        // Description emplacement
         let locationDesc = 'Zone urbaine';
         if (/centre|center|historique|coeur/i.test(name + address)) locationDesc = 'Centre-ville';
         else if (/gare/i.test(name + address)) locationDesc = 'Quartier gare';
