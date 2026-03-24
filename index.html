@@ -82,6 +82,18 @@ input:focus{border-color:var(--gold);}
 .tag-notoken{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-muted);}
 .tag-stars{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold-light);}
 .add-manual{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
+.price-preview{font-size:12px;font-weight:500;color:var(--green);}
+.price-preview.loading{color:var(--text-muted);}
+.price-preview.empty{color:var(--red);}
+.btn-fix{background:none;border:1px solid var(--border);color:var(--text-muted);padding:3px 8px;border-radius:5px;cursor:pointer;font-size:11px;transition:all .15s;white-space:nowrap;}
+.btn-fix:hover{border-color:var(--gold);color:var(--gold);}
+.fix-modal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;z-index:2000;width:420px;box-shadow:0 16px 48px rgba(0,0,0,.8);}
+.fix-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1999;}
+.fix-modal h3{font-family:'Playfair Display',serif;font-size:15px;color:var(--text);margin-bottom:4px;}
+.fix-modal p{font-size:12px;color:var(--text-muted);margin-bottom:14px;}
+.fix-result{margin-top:12px;font-size:12px;color:var(--text-muted);min-height:20px;}
+.fix-result.ok{color:var(--green);}
+.fix-result.err{color:var(--red);}
 .add-manual input{flex:1;background:var(--surface2);border:1px dashed var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 10px;border-radius:6px;outline:none;transition:border-color .2s;}
 .add-manual input:focus{border-color:var(--gold);}
 .btn-add-manual{background:var(--surface2);border:1px dashed var(--border);color:var(--text-muted);padding:8px 14px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:5px;}
@@ -159,12 +171,9 @@ a{color:var(--gold);}
         <input type="text" id="hotelName" placeholder="Ex: Ibis Budget Valence" />
       </div>
     </div>
-    <div>
-      <div class="section-label">Dates de référence</div>
-      <div class="date-grid">
-        <div class="field-group"><label>Arrivée</label><input type="text" id="checkIn" /></div>
-        <div class="field-group"><label>Départ</label><input type="text" id="checkOut" /></div>
-      </div>
+    <div style="display:none">
+      <input type="text" id="checkIn" />
+      <input type="text" id="checkOut" />
     </div>
     <div>
       <div class="section-label">Paramètres</div>
@@ -216,7 +225,7 @@ a{color:var(--gold);}
       <div class="select-hint" id="selectHint">Cochez les hôtels à inclure.</div>
       <table class="results-table">
         <thead><tr>
-          <th>✓</th><th>Hôtel</th><th>Note</th><th>Adresse</th>
+          <th>✓</th><th>Hôtel</th><th>Note</th><th>Prix J+7</th><th>Corriger</th>
         </tr></thead>
         <tbody id="resBody"></tbody>
       </table>
@@ -265,6 +274,21 @@ a{color:var(--gold);}
     <div class="hotels-grid" id="hotelsGrid" style="display:none;"></div>
   </div>
 </div>
+<!-- Fix Modal -->
+<div class="fix-overlay" id="fixOverlay" onclick="closeFix()"></div>
+<div class="fix-modal" id="fixModal">
+  <h3>🔍 Corriger le token</h3>
+  <p id="fixHotelName" style="color:var(--gold-light);margin-bottom:8px;"></p>
+  <p>Entrez un nom de recherche plus précis pour trouver le bon hôtel :</p>
+  <div class="add-manual" style="margin-bottom:8px;">
+    <input type="text" id="fixInput" placeholder="Ex: Novotel Valence Sud 217 avenue de Provence" onkeydown="if(event.key==='Enter')doFix()" />
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-primary" style="padding:9px" onclick="doFix()">Rechercher & corriger</button>
+    <button class="btn-secondary" style="padding:9px;width:auto;padding:9px 16px" onclick="closeFix()">Annuler</button>
+  </div>
+  <div class="fix-result" id="fixResult"></div>
+</div>
 <div class="tooltip" id="tooltip"></div>
 
 <script>
@@ -276,13 +300,14 @@ let currentView = 'matrix';
 let timeseriesData = {}; // { hotelName: [{date, price}] }
 const C = ['#C9A84C','#4A90D9','#5CB85C','#E8624A','#9B59B6','#1ABC9C','#F39C12','#E91E63','#00BCD4','#FF5722'];
 
-(()=>{
+function resetDates(){
   const fmt=d=>d.toISOString().split('T')[0];
   const a=new Date(),b=new Date();
   a.setDate(a.getDate()+7);b.setDate(b.getDate()+8);
   document.getElementById('checkIn').value=fmt(a);
   document.getElementById('checkOut').value=fmt(b);
-})();
+}
+resetDates();
 
 function toggleKey(){const i=document.getElementById('apiKey');i.type=i.type==='password'?'text':'password';}
 function showErr(msg){const e=document.getElementById('errorMsg');e.innerHTML=msg;e.style.display='block';setTimeout(()=>e.style.display='none',10000);}
@@ -316,6 +341,34 @@ function toggleCheck(idx){
   box.classList.toggle('checked',h.checked);
   row.classList.toggle('unchecked',!h.checked);
   updateHint();
+  // Auto-fetch preview prices for hotels with tokens
+  rawHotels.forEach((h,i) => {
+    const el = document.getElementById(`price-${i}`);
+    if(!el) return;
+    if(!h.property_token){
+      el.className='price-preview empty';
+      el.textContent='— Sans token';
+      return;
+    }
+    const key = document.getElementById('apiKey').value.trim();
+    const ci = document.getElementById('checkIn').value;
+    const co = document.getElementById('checkOut').value;
+    fetch(`/api/hotels?action=details&property_token=${encodeURIComponent(h.property_token)}&check_in_date=${ci}&check_out_date=${co}&api_key=${key}`)
+      .then(r=>r.json())
+      .then(d=>{
+        if(d.lowest_price){
+          el.className='price-preview ok';
+          el.textContent=d.lowest_price+'€ ✓';
+          h._previewPrice=d.lowest_price;
+          h._previewPrices=d.prices||[];
+          h._previewAmenities=d.amenities||[];
+        } else {
+          el.className='price-preview empty';
+          el.textContent='— Pas de prix';
+        }
+      })
+      .catch(()=>{ el.className='price-preview empty'; el.textContent='— Erreur'; });
+  });
 }
 
 function updateHint(){
@@ -334,6 +387,7 @@ async function runSearch(){
   if(!key){showErr('Entrez votre clé SerpAPI.');return;}
   if(!name){showErr('Entrez le nom de votre hôtel.');return;}
 
+  resetDates();
   document.getElementById('searchBtn').disabled=true;
   document.getElementById('errorMsg').style.display='none';
   setStep(1);showPanel('panelLoading');
@@ -361,7 +415,7 @@ async function runSearch(){
 
 function renderTable(name,ci,co){
   document.getElementById('resTitle').textContent=`Résultats — ${name}`;
-  document.getElementById('resSub').textContent=`${rawHotels.length} hôtels · Tokens GPS · Dates : ${ci} → ${co}`;
+  document.getElementById('resSub').textContent=`${rawHotels.length} hôtels trouvés · Tokens par nom exact · Graphique sur J+7 à J+60`;
   const tb=document.getElementById('resBody');tb.innerHTML='';
   rawHotels.forEach((h,i)=>{
     const tr=document.createElement('tr');
@@ -376,7 +430,7 @@ function renderTable(name,ci,co){
         ${h.name||'Hôtel'}
         ${h.isReference?'<span class="tag tag-ref">★ Réf.</span>':''}
         ${h.hotel_class?`<span class="tag tag-stars">${h.hotel_class}★</span>`:''}
-        ${h.property_token?'<span class="tag tag-token">✓ GPS</span>':'<span class="tag tag-notoken">Sans token</span>'}
+        ${h.property_token?'<span class="tag tag-token">✓ Prix OTA</span>':'<span class="tag tag-notoken">Sans prix</span>'}
       </div></td>
       <td>${h.overall_rating?`<strong>${h.overall_rating}</strong>/5`:'—'}</td>
       <td style="font-size:11px;color:var(--text-muted)">${h.address||'—'}</td>`;
@@ -495,6 +549,86 @@ async function runScoring(){
     renderCards();
 
   }catch(e){goBack();showErr(e.message||'Erreur.');console.error(e);}
+}
+
+// ── FIX MODAL ─────────────────────────────────────────────────────────────────
+let fixIdx = -1;
+function openFix(idx){
+  fixIdx = idx;
+  const h = rawHotels[idx];
+  document.getElementById('fixHotelName').textContent = h.name;
+  document.getElementById('fixInput').value = h.name;
+  document.getElementById('fixResult').textContent = '';
+  document.getElementById('fixResult').className = 'fix-result';
+  document.getElementById('fixModal').style.display = 'block';
+  document.getElementById('fixOverlay').style.display = 'block';
+  setTimeout(()=>document.getElementById('fixInput').select(), 100);
+}
+function closeFix(){
+  document.getElementById('fixModal').style.display = 'none';
+  document.getElementById('fixOverlay').style.display = 'none';
+  fixIdx = -1;
+}
+async function doFix(){
+  if(fixIdx < 0) return;
+  const query = document.getElementById('fixInput').value.trim();
+  if(!query) return;
+  const key = document.getElementById('apiKey').value.trim();
+  const ci = document.getElementById('checkIn').value;
+  const co = document.getElementById('checkOut').value;
+  const resultEl = document.getElementById('fixResult');
+  resultEl.className = 'fix-result';
+  resultEl.textContent = '⏳ Recherche en cours…';
+  try {
+    // Chercher par nom dans Google Hotels
+    const r = await fetch(`/api/hotels?action=search&q=${encodeURIComponent(query)}&check_in_date=${ci}&check_out_date=${co}&api_key=${key}`);
+    const data = await r.json();
+    if(data.error) throw new Error(data.error);
+    const found = data.properties?.[0];
+    if(!found || !found.property_token) throw new Error('Aucun token trouvé pour ce nom.');
+
+    // Vérifier que ce token n'est pas déjà utilisé par un autre hôtel
+    const duplicate = rawHotels.find((h,i) => i !== fixIdx && h.property_token === found.property_token);
+    if(duplicate) throw new Error(`Ce token est déjà utilisé par "${duplicate.name}". Essayez un nom plus précis.`);
+
+    // Mettre à jour le token
+    rawHotels[fixIdx].property_token = found.property_token;
+    rawHotels[fixIdx].hotel_class = found.hotel_class || rawHotels[fixIdx].hotel_class;
+    rawHotels[fixIdx].overall_rating = found.overall_rating || rawHotels[fixIdx].overall_rating;
+
+    // Récupérer le prix preview
+    const r2 = await fetch(`/api/hotels?action=details&property_token=${encodeURIComponent(found.property_token)}&check_in_date=${ci}&check_out_date=${co}&api_key=${key}`);
+    const d2 = await r2.json();
+    const price = d2.lowest_price;
+
+    const el = document.getElementById(`price-${fixIdx}`);
+    if(price){
+      el.className='price-preview ok';
+      el.textContent=price+'€ ✓';
+      rawHotels[fixIdx]._previewPrice=price;
+      rawHotels[fixIdx]._previewPrices=d2.prices||[];
+      rawHotels[fixIdx]._previewAmenities=d2.amenities||[];
+      resultEl.className='fix-result ok';
+      resultEl.innerHTML=`✅ Token mis à jour · Prix trouvé : <strong>${price}€</strong>`;
+    } else {
+      el.className='price-preview empty';
+      el.textContent='— Pas de prix';
+      resultEl.className='fix-result ok';
+      resultEl.textContent='✅ Token mis à jour mais pas de prix pour cette date.';
+    }
+
+    // Mettre à jour le badge token dans la table
+    const row = document.querySelector(`[data-idx="${fixIdx}"]`);
+    if(row){
+      const tag = row.querySelector('.tag-notoken, .tag-token');
+      if(tag){ tag.className='tag tag-token'; tag.textContent='✓ Prix OTA'; }
+    }
+    updateHint();
+    setTimeout(closeFix, 1500);
+  } catch(e){
+    resultEl.className='fix-result err';
+    resultEl.textContent='❌ '+e.message;
+  }
 }
 
 // ── OTA TABS ──────────────────────────────────────────────────────────────────
