@@ -345,7 +345,7 @@ function renderTable(name){
         ${!h.isReference?`<button class="btn-recheck" title="Rechercher ce nom exact pour corriger le token" onclick="recheckToken(${i},this)">🔍</button>`:''}
       </div></td>
       <td>${h.overall_rating?`<strong>${h.overall_rating}</strong>/5`:'—'}</td>
-      <td style="font-size:11px;color:var(--text-muted)">${h.address||'—'}</td>`;
+      <td style="font-size:11px;color:var(--text-muted)">${h.address||'—'}<br><span style="font-size:9px;color:#444;font-family:monospace">${h.property_token?h.property_token.substring(0,20)+'…':'—'}</span></td>`;
     tb.appendChild(tr);
   });
   updateHint();
