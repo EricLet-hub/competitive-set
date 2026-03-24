@@ -117,18 +117,43 @@ export default async function handler(req, res) {
       }
 
       // Compléter avec Google Local si besoin
+      // Pour chaque hôtel Local sans token, chercher par nom+adresse dans Google Hotels
       for (const h of zoneResults) {
         if (competitors.length >= 12) break;
         const n = normName(h.title);
         if (seen.has(n)) continue;
         if (exclude.test(h.title) || exclude.test(h.type || '')) continue;
         seen.add(n);
+
+        // Chercher le token via nom exact dans hotelsList d'abord
+        const searchStr = h.address ? `${h.title} ${h.address}` : h.title;
+        const titleNorm = normName(h.title);
+        let matchedToken = null;
+        let matchedClass = null;
+        let matchedRating = null;
+
+        // Chercher dans hotelsList par nom
+        for (const gh of hotelsList) {
+          if (refTokens.has(gh.property_token)) continue;
+          const gn = normName(gh.name);
+          const titleWords = titleNorm.split(' ').filter(w => w.length > 3);
+          const ghWords = gn.split(' ').filter(w => w.length > 3);
+          const common = titleWords.filter(w => ghWords.includes(w)).length;
+          const score = common / Math.max(titleWords.length, ghWords.length, 1);
+          if (score >= 0.6) {
+            matchedToken = gh.property_token;
+            matchedClass = gh.hotel_class;
+            matchedRating = gh.overall_rating;
+            break;
+          }
+        }
+
         competitors.push({
           name: h.title,
-          overall_rating: h.rating || null,
-          hotel_class: null,
+          overall_rating: h.rating || matchedRating || null,
+          hotel_class: matchedClass || null,
           address: h.address || null,
-          property_token: null,
+          property_token: matchedToken,
           isReference: false
         });
       }
