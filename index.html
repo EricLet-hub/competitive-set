@@ -379,9 +379,10 @@ ${list}
 Format: [{"name":"NOM_EXACT","score":{"rating":N,"location":N,"roomSize":N,"amenities":N,"competitive":N},"details":{"locationDesc":"SANS_APOSTROPHE","roomSizeSqm":N,"advantage":"SANS_APOSTROPHE"}}]
 Baremes: rating 0-30, location 0-25, roomSize 0-15, amenities 0-20 (piscine+6,resto+5,reunion+5,spa+4,parking+2,fitness+2), competitive 0-10. roomSizeSqm 14-50. Noms identiques.`;
 
-    const ar=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"Tableau JSON uniquement, minifie.",messages:[{role:"user",content:prompt}]})});
+    const ar=await fetch('/api/hotels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'score',hotels:list})});
     const ad=await ar.json();
-    let t=ad.content.map(x=>x.text||'').join('');
+    if(ad.error)throw new Error('Scoring : '+ad.error);
+    let t=JSON.stringify(ad.scored);
     t=t.replace(/```json/gi,'').replace(/```/g,'').trim();
     const fi=t.indexOf('['),li=t.lastIndexOf(']');
     if(fi!==-1&&li!==-1)t=t.substring(fi,li+1);
