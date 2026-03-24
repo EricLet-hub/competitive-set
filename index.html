@@ -52,8 +52,6 @@ input:focus{border-color:var(--gold);}
 .load-step{font-size:12px;color:var(--border);transition:color .3s;}
 .load-step.active{color:var(--text);}
 .load-step.done{color:var(--green);}
-
-/* PANEL RESULTS */
 .panel-results{display:none;padding:22px 28px;}
 .panel-matrix{display:none;padding:22px 28px 0;}
 .page-title{font-family:'Playfair Display',serif;font-size:17px;color:var(--text);margin-bottom:3px;}
@@ -82,17 +80,31 @@ input:focus{border-color:var(--gold);}
 .tag-ref{background:var(--gold);color:var(--dark);}
 .tag-token{background:rgba(92,184,92,.15);border:1px solid rgba(92,184,92,.25);color:var(--green);}
 .tag-notoken{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-muted);}
+.tag-stars{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold-light);}
+.add-manual{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
+.add-manual input{flex:1;background:var(--surface2);border:1px dashed var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 10px;border-radius:6px;outline:none;transition:border-color .2s;}
+.add-manual input:focus{border-color:var(--gold);}
+.btn-add-manual{background:var(--surface2);border:1px dashed var(--border);color:var(--text-muted);padding:8px 14px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:5px;}
+.btn-add-manual:hover{border-color:var(--gold);color:var(--gold);}
+.btn-add-manual:disabled{opacity:.4;cursor:not-allowed;}
 .actions-row{display:flex;gap:8px;}
 .actions-row .btn-primary{flex:2;}
 .actions-row .btn-secondary{flex:1;}
 
-/* MATRIX TABS */
-.tabs-bar{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
-.tab-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);padding:6px 14px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .15s;}
+/* MATRIX & CHART PANEL */
+.view-tabs{display:flex;gap:4px;margin-bottom:16px;}
+.view-tab{background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);padding:7px 16px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .15s;}
+.view-tab.active{background:var(--gold);border-color:var(--gold);color:var(--dark);font-weight:500;}
+.view-tab:hover:not(.active){border-color:var(--gold);color:var(--gold);}
+
+.ota-tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap;}
+.tab-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .15s;}
 .tab-btn.active{background:var(--gold);border-color:var(--gold);color:var(--dark);font-weight:500;}
 .tab-btn:hover:not(.active){border-color:var(--gold);color:var(--gold);}
-.matrix-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-canvas.matrix-canvas{display:block;width:100%;height:420px;}
+
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+canvas.chart-canvas{display:block;width:100%;height:420px;}
+
 .btn-back{background:none;border:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;margin-bottom:12px;transition:color .2s;}
 .btn-back:hover{color:var(--gold);}
 .hotels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:8px;padding:14px 28px 24px;}
@@ -109,29 +121,23 @@ canvas.matrix-canvas{display:block;width:100%;height:420px;}
 .bar-fill{height:100%;border-radius:2px;background:var(--gold);}
 .tooltip{position:fixed;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text);pointer-events:none;z-index:1000;display:none;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.6);line-height:1.7;}
 .date-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-.add-manual{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
-.add-manual input{flex:1;background:var(--surface2);border:1px dashed var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 10px;border-radius:6px;outline:none;transition:border-color .2s;}
-.add-manual input:focus{border-color:var(--gold);}
-.btn-add-manual{background:var(--surface2);border:1px dashed var(--border);color:var(--text-muted);padding:8px 14px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:5px;}
-.btn-add-manual:hover{border-color:var(--gold);color:var(--gold);}
-.btn-add-manual:disabled{opacity:.4;cursor:not-allowed;}
-.btn-recheck{background:none;border:1px solid var(--border);color:var(--text-muted);width:24px;height:24px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;flex-shrink:0;}
-.btn-recheck:hover{border-color:var(--gold);color:var(--gold);}
-.btn-recheck:disabled{opacity:.3;cursor:not-allowed;}
 a{color:var(--gold);}
+.chart-legend{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0 4px;}
+.legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;}
+.chart-loading{display:flex;align-items:center;justify-content:center;height:420px;color:var(--text-muted);font-size:13px;gap:10px;}
 </style>
 </head>
 <body>
 <header>
   <h1>Competitive Set</h1>
-  <span class="live-badge">● Prix réels par OTA</span>
+  <span class="live-badge">● Prix réels · Graphique temporel</span>
 </header>
 <div class="steps-bar">
   <div class="step-item active" id="si1"><div class="step-num" id="sn1">1</div><span>Configuration</span></div>
   <div class="step-arrow">›</div>
   <div class="step-item" id="si2"><div class="step-num" id="sn2">2</div><span>Sélection</span></div>
   <div class="step-arrow">›</div>
-  <div class="step-item" id="si3"><div class="step-num" id="sn3">3</div><span>Matrice &amp; OTA</span></div>
+  <div class="step-item" id="si3"><div class="step-num" id="sn3">3</div><span>Matrices &amp; Courbes</span></div>
 </div>
 
 <div class="main">
@@ -154,7 +160,7 @@ a{color:var(--gold);}
       </div>
     </div>
     <div>
-      <div class="section-label">Dates</div>
+      <div class="section-label">Dates de référence</div>
       <div class="date-grid">
         <div class="field-group"><label>Arrivée</label><input type="text" id="checkIn" /></div>
         <div class="field-group"><label>Départ</label><input type="text" id="checkOut" /></div>
@@ -164,7 +170,7 @@ a{color:var(--gold);}
       <div class="section-label">Paramètres</div>
       <div class="field-group">
         <label>Nb max de résultats</label>
-        <input type="number" id="maxComp" value="10" min="3" max="15" />
+        <input type="number" id="maxComp" value="8" min="3" max="12" />
       </div>
     </div>
     <button class="btn-primary" id="searchBtn" onclick="runSearch()">
@@ -173,7 +179,7 @@ a{color:var(--gold);}
     </button>
     <div class="error-msg" id="errorMsg"></div>
     <div>
-      <div class="section-label">Barème scoring IA</div>
+      <div class="section-label">Barème scoring</div>
       <div class="legend-card">
         <div style="margin-bottom:6px;">Score sur <strong>100 pts</strong></div>
         <div class="legend-item"><span>⭐ Note client</span><span class="legend-score">0–30 pts</span></div>
@@ -189,24 +195,25 @@ a{color:var(--gold);}
     <div class="panel-empty" id="panelEmpty">
       <div class="empty-icon">🏨</div>
       <div>Configurez votre recherche</div>
-      <div style="font-size:12px;text-align:center;max-width:220px;line-height:1.6;color:var(--text-muted);">Prix réels par OTA · Booking, Expedia, Hotels.com…</div>
+      <div style="font-size:12px;text-align:center;max-width:220px;line-height:1.6;color:var(--text-muted);">Tokens par GPS · Prix par OTA · Courbes temporelles</div>
     </div>
 
     <div class="panel-loading" id="panelLoading">
       <div class="spinner"></div>
       <div id="loadTitle" style="font-size:14px;margin-bottom:4px;">Recherche en cours…</div>
       <div class="load-steps">
-        <div class="load-step" id="ls1">📡 Localisation de votre hôtel</div>
-        <div class="load-step" id="ls2">🔍 Recherche des concurrents</div>
-        <div class="load-step" id="ls3">💶 Récupération des prix par OTA</div>
-        <div class="load-step" id="ls4">🤖 Scoring IA &amp; matrices</div>
+        <div class="load-step" id="ls1">📡 Localisation GPS des hôtels</div>
+        <div class="load-step" id="ls2">🎯 Tokens précis par coordonnées GPS</div>
+        <div class="load-step" id="ls3">💶 Prix par OTA pour les dates choisies</div>
+        <div class="load-step" id="ls4">📈 Courbes de prix sur 5 dates</div>
+        <div class="load-step" id="ls5">🤖 Scoring &amp; construction des matrices</div>
       </div>
     </div>
 
     <div class="panel-results" id="panelResults">
       <div class="page-title" id="resTitle"></div>
       <div class="page-sub" id="resSub"></div>
-      <div class="select-hint" id="selectHint">Cochez les hôtels à inclure. <span>Les prix OTA seront récupérés uniquement pour les hôtels cochés.</span></div>
+      <div class="select-hint" id="selectHint">Cochez les hôtels à inclure.</div>
       <table class="results-table">
         <thead><tr>
           <th>✓</th><th>Hôtel</th><th>Note</th><th>Adresse</th>
@@ -223,7 +230,7 @@ a{color:var(--gold);}
       <div class="actions-row">
         <button class="btn-primary" onclick="runScoring()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          Récupérer les prix &amp; générer les matrices
+          Récupérer prix &amp; générer matrices
         </button>
         <button class="btn-secondary" onclick="runSearch()">↺ Relancer</button>
       </div>
@@ -233,8 +240,27 @@ a{color:var(--gold);}
       <button class="btn-back" onclick="goBack()">← Modifier la sélection</button>
       <div class="page-title" id="matTitle"></div>
       <div class="page-sub" id="matSub"></div>
-      <div class="tabs-bar" id="tabsBar"></div>
-      <div class="matrix-wrap"><canvas id="matrix" class="matrix-canvas"></canvas></div>
+
+      <!-- View switcher -->
+      <div class="view-tabs">
+        <button class="view-tab active" onclick="switchView('matrix',this)">📊 Matrice</button>
+        <button class="view-tab" onclick="switchView('timeseries',this)">📈 Courbes de prix</button>
+      </div>
+
+      <!-- MATRIX VIEW -->
+      <div id="viewMatrix">
+        <div class="ota-tabs" id="tabsBar"></div>
+        <div class="chart-wrap"><canvas id="matrix" class="chart-canvas"></canvas></div>
+      </div>
+
+      <!-- TIMESERIES VIEW -->
+      <div id="viewTimeseries" style="display:none;">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+          Prix le plus bas par nuit sur 5 dates · J+7, J+14, J+21, J+30, J+60
+        </div>
+        <div class="chart-wrap"><canvas id="timeChart" class="chart-canvas"></canvas></div>
+        <div class="chart-legend" id="chartLegend"></div>
+      </div>
     </div>
     <div class="hotels-grid" id="hotelsGrid" style="display:none;"></div>
   </div>
@@ -246,12 +272,14 @@ let rawHotels = [];
 let scoredHotels = [];
 let allOtas = [];
 let currentOta = '__global__';
+let currentView = 'matrix';
+let timeseriesData = {}; // { hotelName: [{date, price}] }
 const C = ['#C9A84C','#4A90D9','#5CB85C','#E8624A','#9B59B6','#1ABC9C','#F39C12','#E91E63','#00BCD4','#FF5722'];
 
 (()=>{
   const fmt=d=>d.toISOString().split('T')[0];
   const a=new Date(),b=new Date();
-  a.setDate(a.getDate()+7); b.setDate(b.getDate()+8);
+  a.setDate(a.getDate()+7);b.setDate(b.getDate()+8);
   document.getElementById('checkIn').value=fmt(a);
   document.getElementById('checkOut').value=fmt(b);
 })();
@@ -266,8 +294,18 @@ function showPanel(id){
   });
   document.getElementById('hotelsGrid').style.display=id==='panelMatrix'?'grid':'none';
 }
-function setLS(n){['ls1','ls2','ls3','ls4'].forEach((id,i)=>{document.getElementById(id).className='load-step '+(i+1<n?'done':i+1===n?'active':'');});}
+function setLS(n){['ls1','ls2','ls3','ls4','ls5'].forEach((id,i)=>{document.getElementById(id).className='load-step '+(i+1<n?'done':i+1===n?'active':'');});}
 function goBack(){showPanel('panelResults');setStep(2);}
+
+function switchView(view, btn){
+  currentView=view;
+  document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('viewMatrix').style.display=view==='matrix'?'block':'none';
+  document.getElementById('viewTimeseries').style.display=view==='timeseries'?'block':'none';
+  if(view==='timeseries') renderTimeseries();
+  if(view==='matrix') renderMatrix(currentOta);
+}
 
 function toggleCheck(idx){
   const h=rawHotels[idx];
@@ -282,36 +320,35 @@ function toggleCheck(idx){
 
 function updateHint(){
   const n=rawHotels.filter(h=>h.checked).length;
-  const hasToken=rawHotels.filter(h=>h.checked&&h.property_token).length;
-  document.getElementById('selectHint').innerHTML=
-    `<span>${n} hôtel${n>1?'s':''} sélectionné${n>1?'s':''}</span> · ${hasToken} avec token prix OTA · Les hôtels sans token auront un score IA uniquement.`;
+  const t=rawHotels.filter(h=>h.checked&&h.property_token).length;
+  document.getElementById('selectHint').innerHTML=`<span>${n} hôtel${n>1?'s':''} sélectionné${n>1?'s':''}</span> · ${t} avec prix OTA · ${n-t} score uniquement`;
 }
 
-// ── STEP 1: Search ────────────────────────────────────────────────────────────
+// ── SEARCH ────────────────────────────────────────────────────────────────────
 async function runSearch(){
   const key=document.getElementById('apiKey').value.trim();
   const name=document.getElementById('hotelName').value.trim();
-  const max=Math.min(parseInt(document.getElementById('maxComp').value)||10,15);
+  const ci=document.getElementById('checkIn').value.trim();
+  const co=document.getElementById('checkOut').value.trim();
+  const max=Math.min(parseInt(document.getElementById('maxComp').value)||8,12);
   if(!key){showErr('Entrez votre clé SerpAPI.');return;}
   if(!name){showErr('Entrez le nom de votre hôtel.');return;}
 
   document.getElementById('searchBtn').disabled=true;
   document.getElementById('errorMsg').style.display='none';
   setStep(1);showPanel('panelLoading');
-  document.getElementById('loadTitle').textContent='Recherche des hôtels…';
+  document.getElementById('loadTitle').textContent='Localisation GPS en cours…';
   setLS(1);
 
   try{
     setLS(2);
-    const r=await fetch(`/api/hotels?action=search&q=${encodeURIComponent(name)}&api_key=${key}`);
+    const r=await fetch(`/api/hotels?action=search&q=${encodeURIComponent(name)}&check_in_date=${ci}&check_out_date=${co}&api_key=${key}`);
     const data=await r.json();
     if(!r.ok||data.error)throw new Error(data.error||`Erreur (${r.status})`);
-
     const props=data.properties||[];
-    if(props.length===0)throw new Error(`Aucun hôtel trouvé pour "${name}".`);
-
+    if(!props.length)throw new Error(`Aucun hôtel trouvé pour "${name}".`);
     rawHotels=props.slice(0,max).map((h,i)=>({...h,checked:true,colorIdx:i}));
-    renderTable(name);
+    renderTable(name,ci,co);
     setStep(2);showPanel('panelResults');
   }catch(e){
     showPanel('panelEmpty');setStep(1);
@@ -322,11 +359,9 @@ async function runSearch(){
   }
 }
 
-function renderTable(name){
-  const ci=document.getElementById('checkIn').value;
-  const co=document.getElementById('checkOut').value;
+function renderTable(name,ci,co){
   document.getElementById('resTitle').textContent=`Résultats — ${name}`;
-  document.getElementById('resSub').textContent=`${rawHotels.length} hôtels trouvés · Dates : ${ci} → ${co}`;
+  document.getElementById('resSub').textContent=`${rawHotels.length} hôtels · Tokens GPS · Dates : ${ci} → ${co}`;
   const tb=document.getElementById('resBody');tb.innerHTML='';
   rawHotels.forEach((h,i)=>{
     const tr=document.createElement('tr');
@@ -340,203 +375,132 @@ function renderTable(name){
         <span class="dot" style="background:${C[i%C.length]}"></span>
         ${h.name||'Hôtel'}
         ${h.isReference?'<span class="tag tag-ref">★ Réf.</span>':''}
-        ${h.hotel_class?`<span class="tag" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold-light)">${h.hotel_class}★</span>`:''}
-        ${h.property_token?'<span class="tag tag-token">✓ Prix OTA</span>':'<span class="tag tag-notoken">Sans prix</span>'}
-        ${!h.isReference?`<button class="btn-recheck" title="Rechercher ce nom exact pour corriger le token" onclick="recheckToken(${i},this)">🔍</button>`:''}
+        ${h.hotel_class?`<span class="tag tag-stars">${h.hotel_class}★</span>`:''}
+        ${h.property_token?'<span class="tag tag-token">✓ GPS</span>':'<span class="tag tag-notoken">Sans token</span>'}
       </div></td>
       <td>${h.overall_rating?`<strong>${h.overall_rating}</strong>/5`:'—'}</td>
-      <td style="font-size:11px;color:var(--text-muted)">${h.address||'—'}<br><span style="font-size:9px;color:#444;font-family:monospace">${h.property_token?h.property_token.substring(0,20)+'…':'—'}</span></td>`;
+      <td style="font-size:11px;color:var(--text-muted)">${h.address||'—'}</td>`;
     tb.appendChild(tr);
   });
   updateHint();
 }
 
-// ── ADD MANUAL COMPETITOR ─────────────────────────────────────────────────────
+// ── ADD MANUAL ─────────────────────────────────────────────────────────────────
 async function addManual(){
-  const input = document.getElementById('manualInput');
-  const name = input.value.trim();
-  if(!name){showErr('Entrez le nom de l\'hôtel à ajouter.');return;}
-
-  const key = document.getElementById('apiKey').value.trim();
+  const input=document.getElementById('manualInput');
+  const name=input.value.trim();
+  if(!name){showErr('Entrez le nom de l\'hôtel.');return;}
+  const key=document.getElementById('apiKey').value.trim();
   if(!key){showErr('Clé SerpAPI manquante.');return;}
-
-  const btn = document.getElementById('addManualBtn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Recherche…';
-
+  const ci=document.getElementById('checkIn').value;
+  const co=document.getElementById('checkOut').value;
+  const btn=document.getElementById('addManualBtn');
+  btn.disabled=true;btn.textContent='⏳';
   try{
-    // Chercher l'hôtel via Google Local pour récupérer son property_token
-    const r = await fetch(`/api/hotels?action=search&q=${encodeURIComponent(name)}&api_key=${key}`);
-    const data = await r.json();
-    if(!r.ok || data.error) throw new Error(data.error || 'Hôtel non trouvé');
-
-    const found = data.properties?.[0];
-    if(!found) throw new Error(`"${name}" introuvable. Essayez un nom plus précis.`);
-
-    // Vérifier que ce n'est pas déjà dans la liste
-    const alreadyExists = rawHotels.some(h => 
-      h.name.toLowerCase().includes(name.toLowerCase()) || 
-      name.toLowerCase().includes(h.name.toLowerCase())
-    );
-    if(alreadyExists){showErr(`"${found.name}" est déjà dans la liste.`);return;}
-
-    // Ajouter à rawHotels avec une nouvelle couleur
-    const newIdx = rawHotels.length;
-    rawHotels.push({
-      ...found,
-      name: found.name,
-      checked: true,
-      colorIdx: newIdx,
-      isReference: false,
-      manuallyAdded: true
-    });
-
-    // Re-render la table
-    const hotelName = document.getElementById('resTitle').textContent.replace('Résultats — ','');
-    renderTable(hotelName);
-    input.value = '';
-
-  }catch(e){
-    showErr(e.message || 'Erreur lors de la recherche.');
-    console.error(e);
-  }finally{
-    btn.disabled = false;
-    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Ajouter';
-  }
+    const r=await fetch(`/api/hotels?action=search&q=${encodeURIComponent(name)}&check_in_date=${ci}&check_out_date=${co}&api_key=${key}`);
+    const data=await r.json();
+    if(!r.ok||data.error)throw new Error(data.error||'Non trouvé');
+    const found=data.properties?.[0];
+    if(!found)throw new Error(`"${name}" introuvable.`);
+    if(rawHotels.some(h=>h.name.toLowerCase()===found.name.toLowerCase())){showErr(`"${found.name}" déjà dans la liste.`);return;}
+    rawHotels.push({...found,checked:true,colorIdx:rawHotels.length,isReference:false});
+    const hotelName=document.getElementById('resTitle').textContent.replace('Résultats — ','');
+    const ci2=document.getElementById('checkIn').value,co2=document.getElementById('checkOut').value;
+    renderTable(hotelName,ci2,co2);
+    input.value='';
+  }catch(e){showErr(e.message);console.error(e);}
+  finally{btn.disabled=false;btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Ajouter';}
 }
 
-// ── RECHECK TOKEN ─────────────────────────────────────────────────────────────
-async function recheckToken(idx, btn){
-  const h = rawHotels[idx];
-  if(!h) return;
-  const key = document.getElementById('apiKey').value.trim();
-  if(!key){showErr('Clé SerpAPI manquante.');return;}
-
-  btn.disabled = true;
-  btn.textContent = '⏳';
-
-  try{
-    // Recherche Google Hotels par nom exact pour forcer le bon token
-    const ci = document.getElementById('checkIn').value;
-    const co = document.getElementById('checkOut').value;
-    const r = await fetch(`/api/hotels?action=search&q=${encodeURIComponent(h.name)}&check_in_date=${ci}&check_out_date=${co}&api_key=${key}`);
-    const data = await r.json();
-    if(!r.ok || data.error) throw new Error(data.error || 'Non trouvé');
-
-    const found = data.properties?.[0];
-    if(!found) throw new Error('Hôtel introuvable');
-
-    // Mettre à jour le token et la note
-    rawHotels[idx].property_token = found.property_token;
-    rawHotels[idx].overall_rating = found.overall_rating || h.overall_rating;
-
-    // Mettre à jour visuellement la ligne
-    const row = document.querySelector(`[data-idx="${idx}"]`);
-    if(row){
-      const tokenTag = row.querySelector('.tag-token, .tag-notoken');
-      if(tokenTag){
-        tokenTag.className = found.property_token ? 'tag tag-token' : 'tag tag-notoken';
-        tokenTag.textContent = found.property_token ? '✓ Prix OTA' : 'Sans prix';
-      }
-    }
-    btn.textContent = found.property_token ? '✅' : '❌';
-    setTimeout(() => { btn.textContent = '🔍'; btn.disabled = false; }, 2000);
-    updateHint();
-
-  }catch(e){
-    showErr('Correction échouée : ' + e.message);
-    btn.textContent = '❌';
-    setTimeout(() => { btn.textContent = '🔍'; btn.disabled = false; }, 2000);
-    console.error(e);
-  }
-}
-
-// ── STEP 2: Scoring + prices ──────────────────────────────────────────────────
+// ── SCORING + PRICES + TIMESERIES ──────────────────────────────────────────────
 async function runScoring(){
   const selected=rawHotels.filter(h=>h.checked);
   if(selected.length<2){showErr('Sélectionnez au moins 2 hôtels.');return;}
-
   const key=document.getElementById('apiKey').value.trim();
   const ci=document.getElementById('checkIn').value;
   const co=document.getElementById('checkOut').value;
 
   showPanel('panelLoading');
-  document.getElementById('loadTitle').textContent='Récupération des prix OTA…';
+  document.getElementById('loadTitle').textContent='Récupération des prix…';
   setLS(3);
 
   try{
-    // Récupérer les prix OTA pour chaque hôtel coché avec property_token
+    // STEP 1: Prix OTA pour les dates choisies
     const withToken=selected.filter(h=>h.property_token);
     let done=0;
-    document.getElementById('ls3').textContent=`💶 Récupération des prix (0/${withToken.length})…`;
-
+    document.getElementById('ls3').textContent=`💶 Prix OTA (0/${withToken.length})…`;
     const detailsMap={};
     await Promise.all(withToken.map(async h=>{
       try{
         const r=await fetch(`/api/hotels?action=details&property_token=${encodeURIComponent(h.property_token)}&check_in_date=${ci}&check_out_date=${co}&api_key=${key}`);
         const d=await r.json();
-        if(!d.error) detailsMap[h.name]=d;
-      }catch(e){console.warn('Prix non récupéré pour',h.name,e);}
+        if(!d.error)detailsMap[h.name]=d;
+      }catch(e){console.warn('Prix non récupéré:',h.name);}
       done++;
-      document.getElementById('ls3').textContent=`💶 Récupération des prix (${done}/${withToken.length})…`;
+      document.getElementById('ls3').textContent=`💶 Prix OTA (${done}/${withToken.length})…`;
     }));
 
+    // STEP 2: Timeseries — prix sur 5 dates
     setLS(4);
+    document.getElementById('ls4').textContent=`📈 Courbes de prix (0/${withToken.length})…`;
+    timeseriesData={};
+    let tsDone=0;
+    await Promise.all(withToken.map(async h=>{
+      try{
+        const r=await fetch(`/api/hotels?action=timeseries&property_token=${encodeURIComponent(h.property_token)}&q=${encodeURIComponent(h.name)}&api_key=${key}`);
+        const d=await r.json();
+        if(!d.error&&d.timeseries)timeseriesData[h.name]=d.timeseries;
+      }catch(e){console.warn('Timeseries non récupéré:',h.name);}
+      tsDone++;
+      document.getElementById('ls4').textContent=`📈 Courbes de prix (${tsDone}/${withToken.length})…`;
+    }));
 
-    // Scoring algorithmique gratuit
+    // STEP 3: Scoring
+    setLS(5);
     const hotelsForScoring=selected.map(h=>{
       const det=detailsMap[h.name]||{};
-      return{name:h.name,overall_rating:h.overall_rating||det.overall_rating||null,hotel_class:h.hotel_class||det.hotel_class||null,address:h.address||null,amenities:det.amenities||h.amenities||[],isReference:h.isReference};
+      return{name:h.name,overall_rating:h.overall_rating||det.overall_rating||null,hotel_class:h.hotel_class||det.hotel_class||null,address:h.address||null,amenities:det.amenities||[]};
     });
     const ar=await fetch('/api/hotels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'score',hotels:hotelsForScoring})});
     const ad=await ar.json();
-    if(ad.error)throw new Error('Scoring : '+ad.error);
+    if(ad.error)throw new Error('Scoring: '+ad.error);
     const sc=ad.scored||[];
 
-    // Construire scoredHotels avec tous les prix OTA
     scoredHotels=selected.map((h,i)=>{
       const ai=sc.find(s=>s.name===h.name)||sc[i]||{};
       const s=ai.score||{rating:16,location:14,roomSize:9,amenities:7,competitive:4};
-      const d=ai.details||{locationDesc:'Zone urbaine',roomSizeSqm:18,advantage:'Bon rapport qualite-prix'};
+      const d=ai.details||{locationDesc:'Zone urbaine',roomSizeSqm:20,advantage:'Bon rapport qualite-prix',stars:3};
       const det=detailsMap[h.name]||{};
       return{
-        name:h.name||'Hôtel',
-        isRef:h.isReference,
-        score:s,
+        name:h.name,isRef:h.isReference,score:s,
         details:{...d,googleRating:h.overall_rating||det.overall_rating||3.8},
         totalScore:(s.rating||0)+(s.location||0)+(s.roomSize||0)+(s.amenities||0)+(s.competitive||0),
         color:C[h.colorIdx%C.length],
         lowestPrice:det.lowest_price||null,
-        otaPrices:det.prices||[],  // [{source, price}]
-        amenities:det.amenities||[]
+        otaPrices:det.prices||[],
+        timeseries:timeseriesData[h.name]||[]
       };
     });
 
-    // Collecter toutes les OTAs présentes
     const otaSet=new Set();
     scoredHotels.forEach(h=>h.otaPrices.forEach(p=>{if(p.source&&p.price)otaSet.add(p.source);}));
     allOtas=Array.from(otaSet).sort();
 
     const ref=scoredHotels.find(h=>h.isRef);
-    document.getElementById('matTitle').textContent=`Matrices — ${ref?.name||'Competitive Set'}`;
-    document.getElementById('matSub').textContent=`${scoredHotels.length} hôtels · ${ci} → ${co} · Prix réels par OTA`;
-    setStep(3);
-    buildTabs();
-    showPanel('panelMatrix');
+    document.getElementById('matTitle').textContent=`Analyse — ${ref?.name||'Competitive Set'}`;
+    document.getElementById('matSub').textContent=`${scoredHotels.length} hôtels · Tokens GPS · Prix réels par OTA`;
+    setStep(3);showPanel('panelMatrix');
+    buildOtaTabs();
     renderMatrix('__global__');
     renderCards();
 
   }catch(e){goBack();showErr(e.message||'Erreur.');console.error(e);}
 }
 
-// ── TABS ──────────────────────────────────────────────────────────────────────
-function buildTabs(){
-  const bar=document.getElementById('tabsBar');
-  bar.innerHTML='';
-  const tabs=[{id:'__global__',label:'Prix global (+ bas)'},
-    ...allOtas.map(o=>({id:o,label:o}))
-  ];
-  tabs.forEach(tab=>{
+// ── OTA TABS ──────────────────────────────────────────────────────────────────
+function buildOtaTabs(){
+  const bar=document.getElementById('tabsBar');bar.innerHTML='';
+  [{id:'__global__',label:'Prix global (+ bas)'}, ...allOtas.map(o=>({id:o,label:o}))].forEach(tab=>{
     const btn=document.createElement('button');
     btn.className='tab-btn'+(tab.id==='__global__'?' active':'');
     btn.textContent=tab.label;
@@ -551,9 +515,8 @@ function buildTabs(){
 }
 
 function getHotelPrice(h,ota){
-  if(ota==='__global__') return h.lowestPrice;
-  const p=h.otaPrices.find(p=>p.source===ota);
-  return p?.price||null;
+  if(ota==='__global__')return h.lowestPrice;
+  return h.otaPrices.find(p=>p.source===ota)?.price||null;
 }
 
 // ── MATRIX ────────────────────────────────────────────────────────────────────
@@ -562,32 +525,24 @@ function renderMatrix(ota){
   const W=cv.parentElement.offsetWidth,H=420,dpr=devicePixelRatio||1;
   cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';
   const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
-
-  // Filtrer hôtels ayant un prix pour cette OTA
   const hotels=scoredHotels.filter(h=>getHotelPrice(h,ota)!==null);
   if(hotels.length<2){
     ctx.fillStyle='#161616';ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#555';ctx.font='14px DM Sans';ctx.textAlign='center';
+    ctx.fillStyle='#555';ctx.font='13px DM Sans';ctx.textAlign='center';
     ctx.fillText(`Aucun prix disponible pour ${ota==='__global__'?'cette sélection':ota}`,W/2,H/2);
     return;
   }
-
   const P={t:36,r:42,b:52,l:54},pw=W-P.l-P.r,ph=H-P.t-P.b;
   const prices=hotels.map(h=>getHotelPrice(h,ota));
   const mn=Math.floor(Math.min(...prices)*.82),mx=Math.ceil(Math.max(...prices)*1.18);
   const tx=p=>P.l+(p-mn)/(mx-mn)*pw,ty=s=>P.t+ph-s/100*ph;
-
   ctx.fillStyle='#161616';ctx.fillRect(0,0,W,H);
   for(let i=0;i<=4;i++){
     ctx.strokeStyle='#222';ctx.lineWidth=1;
-    const y=P.t+(ph/4)*i;
-    ctx.beginPath();ctx.moveTo(P.l,y);ctx.lineTo(W-P.r,y);ctx.stroke();
-    ctx.fillStyle='#484848';ctx.font='11px DM Sans';ctx.textAlign='right';
-    ctx.fillText(100-25*i,P.l-7,y+4);
-    const x=P.l+(pw/4)*i;
-    ctx.beginPath();ctx.moveTo(x,P.t);ctx.lineTo(x,H-P.b);ctx.stroke();
-    ctx.textAlign='center';
-    ctx.fillText(Math.round(mn+(mx-mn)/4*i)+'€',x,H-P.b+14);
+    const y=P.t+(ph/4)*i;ctx.beginPath();ctx.moveTo(P.l,y);ctx.lineTo(W-P.r,y);ctx.stroke();
+    ctx.fillStyle='#484848';ctx.font='11px DM Sans';ctx.textAlign='right';ctx.fillText(100-25*i,P.l-7,y+4);
+    const x=P.l+(pw/4)*i;ctx.beginPath();ctx.moveTo(x,P.t);ctx.lineTo(x,H-P.b);ctx.stroke();
+    ctx.textAlign='center';ctx.fillText(Math.round(mn+(mx-mn)/4*i)+'€',x,H-P.b+14);
   }
   ctx.strokeStyle='rgba(201,168,76,.12)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
   ctx.beginPath();ctx.moveTo(tx((mn+mx)/2),P.t);ctx.lineTo(tx((mn+mx)/2),H-P.b);ctx.stroke();
@@ -601,7 +556,6 @@ function renderMatrix(ota){
   ctx.fillStyle='#666';ctx.font='11px DM Sans';ctx.textAlign='center';
   ctx.fillText('Prix / nuit (€)'+(ota!=='__global__'?' — '+ota:''),W/2,H-4);
   ctx.save();ctx.translate(12,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('Score qualitatif (/100)',0,0);ctx.restore();
-
   hotels.forEach(h=>{
     const price=getHotelPrice(h,ota);
     const x=tx(price),y=ty(h.totalScore),r=h.isRef?12:8;
@@ -613,7 +567,6 @@ function renderMatrix(ota){
     const right=x>W-P.r-85;ctx.textAlign=right?'right':'left';
     ctx.fillText(sh,right?x-r-4:x+r+4,y+3);
   });
-
   cv.onmousemove=e=>{
     const rc=cv.getBoundingClientRect(),mx2=e.clientX-rc.left,my2=e.clientY-rc.top;
     const f=hotels.find(h=>{const price=getHotelPrice(h,ota);return Math.hypot(mx2-tx(price),my2-ty(h.totalScore))<(h.isRef?12:8)+8;});
@@ -621,9 +574,9 @@ function renderMatrix(ota){
     if(f){
       const price=getHotelPrice(f,ota);
       const otaLines=f.otaPrices.slice(0,4).map(p=>`${p.source} : ${p.price}€`).join('<br>');
-      tip.innerHTML=`<strong style="color:${f.color}">${f.name}</strong>${f.isRef?' <span style="color:var(--gold);font-size:10px">★ Réf.</span>':''}<br>
-Prix${ota!=='__global__'?' ('+ota+')':' le + bas'} : <strong>${price}€</strong><br>
-Score : <strong>${f.totalScore}/100</strong> · Note : ${f.details.googleRating}/5<br>
+      tip.innerHTML=`<strong style="color:${f.color}">${f.name}</strong>${f.isRef?' <span style="color:var(--gold)">★ Réf.</span>':''}<br>
+Prix : <strong>${price}€</strong>/nuit · Score : <strong>${f.totalScore}/100</strong><br>
+Note : ${f.details.googleRating}/5 · ${f.details.stars?f.details.stars+'★ ':''}<br>
 ${otaLines?'<hr style="border-color:#333;margin:4px 0">'+otaLines:''}`;
       tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-10)+'px';
     }else tip.style.display='none';
@@ -631,23 +584,160 @@ ${otaLines?'<hr style="border-color:#333;margin:4px 0">'+otaLines:''}`;
   cv.onmouseleave=()=>document.getElementById('tooltip').style.display='none';
 }
 
+// ── TIMESERIES ────────────────────────────────────────────────────────────────
+function renderTimeseries(){
+  const cv=document.getElementById('timeChart');
+  const W=cv.parentElement.offsetWidth,H=420,dpr=devicePixelRatio||1;
+  cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';
+  const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+
+  // Collecter toutes les dates et tous les prix
+  const hotelsWithTS=scoredHotels.filter(h=>h.timeseries&&h.timeseries.length>0);
+  if(!hotelsWithTS.length){
+    ctx.fillStyle='#161616';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#555';ctx.font='13px DM Sans';ctx.textAlign='center';
+    ctx.fillText('Aucune donnée temporelle disponible',W/2,H/2);
+    ctx.fillStyle='#444';ctx.font='11px DM Sans';
+    ctx.fillText('Les hôtels doivent avoir un token GPS valide',W/2,H/2+22);
+    return;
+  }
+
+  // Dates communes
+  const dates=hotelsWithTS[0].timeseries.map(t=>t.date);
+  const allPrices=hotelsWithTS.flatMap(h=>h.timeseries.map(t=>t.price).filter(Boolean));
+  if(!allPrices.length){
+    ctx.fillStyle='#161616';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#555';ctx.font='13px DM Sans';ctx.textAlign='center';
+    ctx.fillText('Aucun prix disponible sur ces dates',W/2,H/2);
+    return;
+  }
+
+  const P={t:30,r:30,b:60,l:60},pw=W-P.l-P.r,ph=H-P.t-P.b;
+  const minP=Math.floor(Math.min(...allPrices)*0.85);
+  const maxP=Math.ceil(Math.max(...allPrices)*1.15);
+  const tx=i=>P.l+(i/(dates.length-1))*pw;
+  const ty=p=>P.t+ph-(p-minP)/(maxP-minP)*ph;
+
+  ctx.fillStyle='#161616';ctx.fillRect(0,0,W,H);
+
+  // Grille horizontale
+  for(let i=0;i<=4;i++){
+    const p=minP+(maxP-minP)/4*i;
+    const y=ty(p);
+    ctx.strokeStyle='#222';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(P.l,y);ctx.lineTo(W-P.r,y);ctx.stroke();
+    ctx.fillStyle='#484848';ctx.font='11px DM Sans';ctx.textAlign='right';
+    ctx.fillText(Math.round(p)+'€',P.l-8,y+4);
+  }
+
+  // Labels dates en bas
+  dates.forEach((d,i)=>{
+    const x=tx(i);
+    ctx.strokeStyle='#222';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x,P.t);ctx.lineTo(x,H-P.b);ctx.stroke();
+    ctx.fillStyle='#484848';ctx.font='10px DM Sans';ctx.textAlign='center';
+    const shortDate=d.substring(5); // MM-DD
+    ctx.fillText(shortDate,x,H-P.b+16);
+    ctx.fillStyle='#333';ctx.fillText('J+'+(i===0?7:i===1?14:i===2?21:i===3?30:60),x,H-P.b+28);
+  });
+
+  // Axe Y label
+  ctx.fillStyle='#666';ctx.font='11px DM Sans';ctx.textAlign='center';
+  ctx.save();ctx.translate(14,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('Prix / nuit (€)',0,0);ctx.restore();
+  ctx.textAlign='center';ctx.fillText('Dates (J = aujourd\'hui)',W/2,H-4);
+
+  // Ligne de référence pour votre hôtel (zone cible)
+  const refHotel=scoredHotels.find(h=>h.isRef);
+  if(refHotel?.timeseries?.length){
+    const refPrices=refHotel.timeseries.map(t=>t.price).filter(Boolean);
+    if(refPrices.length>=2){
+      // Zone glow derrière la courbe référence
+      ctx.beginPath();
+      refHotel.timeseries.forEach((t,i)=>{
+        if(t.price===null)return;
+        i===0?ctx.moveTo(tx(i),ty(t.price)):ctx.lineTo(tx(i),ty(t.price));
+      });
+      ctx.strokeStyle=refHotel.color;ctx.lineWidth=3;ctx.shadowColor=refHotel.color;ctx.shadowBlur=8;ctx.stroke();
+      ctx.shadowBlur=0;
+    }
+  }
+
+  // Courbes de chaque hôtel
+  hotelsWithTS.forEach(h=>{
+    const pts=h.timeseries.filter(t=>t.price!==null);
+    if(pts.length<2)return;
+
+    ctx.beginPath();
+    let first=true;
+    h.timeseries.forEach((t,i)=>{
+      if(t.price===null)return;
+      const x=tx(i),y=ty(t.price);
+      first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle=h.color;
+    ctx.lineWidth=h.isRef?3:2;
+    ctx.setLineDash(h.isRef?[]:[5,3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Points
+    h.timeseries.forEach((t,i)=>{
+      if(t.price===null)return;
+      ctx.beginPath();ctx.arc(tx(i),ty(t.price),h.isRef?5:4,0,Math.PI*2);
+      ctx.fillStyle=h.color;ctx.fill();
+      // Prix au dessus du point
+      ctx.fillStyle=h.color;ctx.font=h.isRef?'bold 10px DM Sans':'10px DM Sans';ctx.textAlign='center';
+      ctx.fillText(t.price+'€',tx(i),ty(t.price)-(h.isRef?12:10));
+    });
+  });
+
+  // Hover
+  cv.onmousemove=e=>{
+    const rc=cv.getBoundingClientRect(),mx2=e.clientX-rc.left,my2=e.clientY-rc.top;
+    // Trouver la date la plus proche
+    const dateIdx=Math.round((mx2-P.l)/pw*(dates.length-1));
+    if(dateIdx<0||dateIdx>=dates.length){document.getElementById('tooltip').style.display='none';return;}
+    const tip=document.getElementById('tooltip');
+    const lines=hotelsWithTS.map(h=>{
+      const t=h.timeseries[dateIdx];
+      return `<span style="color:${h.color}">●</span> ${h.name.length>20?h.name.substring(0,18)+'…':h.name} : <strong>${t?.price?t.price+'€':'—'}</strong>`;
+    }).join('<br>');
+    tip.innerHTML=`<strong>${dates[dateIdx]}</strong><br>${lines}`;
+    tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-10)+'px';
+  };
+  cv.onmouseleave=()=>document.getElementById('tooltip').style.display='none';
+
+  // Légende
+  const legend=document.getElementById('chartLegend');
+  legend.innerHTML=hotelsWithTS.map(h=>
+    `<span><span class="legend-dot" style="background:${h.color}"></span>${h.name.length>22?h.name.substring(0,20)+'…':h.name}${h.isRef?' (Réf.)':''}</span>`
+  ).join('');
+}
+
 function renderCards(){
   const g=document.getElementById('hotelsGrid');g.innerHTML='';
   scoredHotels.forEach(h=>{
     const c=document.createElement('div');c.className='hotel-card'+(h.isRef?' ref-card':'');
-    const top3=h.otaPrices.slice(0,3).map(p=>`<div class="hc-ota"><span>${p.source}</span><span>${p.price}€</span></div>`).join('');
+    const top3=h.otaPrices.slice(0,3).map(p=>`<div class="hc-ota"><span>${p.source.substring(0,20)}</span><span>${p.price}€</span></div>`).join('');
+    const stars=h.details.stars?'★'.repeat(h.details.stars):'';
     c.innerHTML=`
       <div class="hc-name"><span class="dot" style="background:${h.color}"></span>${h.name}${h.isRef?'<span class="tag tag-ref" style="margin-left:4px">Réf.</span>':''}</div>
       <div class="hc-stat"><span>Prix min</span><span>${h.lowestPrice?h.lowestPrice+'€':'—'}</span></div>
       <div class="hc-stat"><span>Score</span><span>${h.totalScore}/100</span></div>
-      ${h.details.stars?`<div class="hc-stat"><span>Catégorie</span><span>${'★'.repeat(h.details.stars)}</span></div>`:''}
+      <div class="hc-stat"><span>Catégorie</span><span>${stars||'—'}</span></div>
       <div class="hc-stat"><span>Note</span><span>${h.details.googleRating}/5</span></div>
       ${top3?`<div class="hc-prices">${top3}</div>`:''}
       <div class="bar-mini"><div class="bar-fill" style="width:${h.totalScore}%"></div></div>`;
     g.appendChild(c);
   });
 }
-window.addEventListener('resize',()=>{if(scoredHotels.length&&document.getElementById('panelMatrix').style.display!=='none')renderMatrix(currentOta);});
+
+window.addEventListener('resize',()=>{
+  if(!scoredHotels.length)return;
+  if(document.getElementById('panelMatrix').style.display==='none')return;
+  if(currentView==='matrix')renderMatrix(currentOta);
+  else renderTimeseries();
+});
 </script>
 </body>
 </html>
