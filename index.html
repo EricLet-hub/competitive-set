@@ -109,6 +109,12 @@ canvas.matrix-canvas{display:block;width:100%;height:420px;}
 .bar-fill{height:100%;border-radius:2px;background:var(--gold);}
 .tooltip{position:fixed;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text);pointer-events:none;z-index:1000;display:none;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.6);line-height:1.7;}
 .date-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.add-manual{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
+.add-manual input{flex:1;background:var(--surface2);border:1px dashed var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 10px;border-radius:6px;outline:none;transition:border-color .2s;}
+.add-manual input:focus{border-color:var(--gold);}
+.btn-add-manual{background:var(--surface2);border:1px dashed var(--border);color:var(--text-muted);padding:8px 14px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:5px;}
+.btn-add-manual:hover{border-color:var(--gold);color:var(--gold);}
+.btn-add-manual:disabled{opacity:.4;cursor:not-allowed;}
 a{color:var(--gold);}
 </style>
 </head>
@@ -204,6 +210,13 @@ a{color:var(--gold);}
         </tr></thead>
         <tbody id="resBody"></tbody>
       </table>
+      <div class="add-manual">
+        <input type="text" id="manualInput" placeholder="Ajouter un concurrent : ex. Mercure Valence Sud" onkeydown="if(event.key==='Enter')addManual()" />
+        <button class="btn-add-manual" id="addManualBtn" onclick="addManual()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter
+        </button>
+      </div>
       <div class="actions-row">
         <button class="btn-primary" onclick="runScoring()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
@@ -331,6 +344,60 @@ function renderTable(name){
     tb.appendChild(tr);
   });
   updateHint();
+}
+
+// ── ADD MANUAL COMPETITOR ─────────────────────────────────────────────────────
+async function addManual(){
+  const input = document.getElementById('manualInput');
+  const name = input.value.trim();
+  if(!name){showErr('Entrez le nom de l\'hôtel à ajouter.');return;}
+
+  const key = document.getElementById('apiKey').value.trim();
+  if(!key){showErr('Clé SerpAPI manquante.');return;}
+
+  const btn = document.getElementById('addManualBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Recherche…';
+
+  try{
+    // Chercher l'hôtel via Google Local pour récupérer son property_token
+    const r = await fetch(`/api/hotels?action=search&q=${encodeURIComponent(name)}&api_key=${key}`);
+    const data = await r.json();
+    if(!r.ok || data.error) throw new Error(data.error || 'Hôtel non trouvé');
+
+    const found = data.properties?.[0];
+    if(!found) throw new Error(`"${name}" introuvable. Essayez un nom plus précis.`);
+
+    // Vérifier que ce n'est pas déjà dans la liste
+    const alreadyExists = rawHotels.some(h => 
+      h.name.toLowerCase().includes(name.toLowerCase()) || 
+      name.toLowerCase().includes(h.name.toLowerCase())
+    );
+    if(alreadyExists){showErr(`"${found.name}" est déjà dans la liste.`);return;}
+
+    // Ajouter à rawHotels avec une nouvelle couleur
+    const newIdx = rawHotels.length;
+    rawHotels.push({
+      ...found,
+      name: found.name,
+      checked: true,
+      colorIdx: newIdx,
+      isReference: false,
+      manuallyAdded: true
+    });
+
+    // Re-render la table
+    const hotelName = document.getElementById('resTitle').textContent.replace('Résultats — ','');
+    renderTable(hotelName);
+    input.value = '';
+
+  }catch(e){
+    showErr(e.message || 'Erreur lors de la recherche.');
+    console.error(e);
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Ajouter';
+  }
 }
 
 // ── STEP 2: Scoring + prices ──────────────────────────────────────────────────
