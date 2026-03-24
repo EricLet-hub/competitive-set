@@ -4,16 +4,14 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { action, q, property_token, check_in_date, check_out_date, api_key } = req.method === 'POST'
-    ? req.body || {}
-    : req.query;
-
-  if (!api_key && action !== 'score') return res.status(400).json({ error: 'Clé API manquante' });
+  const params = req.method === 'POST' ? (req.body || {}) : req.query;
+  const { action, q, property_token, check_in_date, check_out_date, api_key } = params;
 
   try {
 
-    // ── ACTION: search ─────────────────────────────────────────────────────
+    // ACTION: search
     if (action === 'search' || !action) {
+      if (!api_key) return res.status(400).json({ error: 'Clé API manquante' });
       if (!q) return res.status(400).json({ error: 'Paramètre q manquant' });
 
       const words = q.trim().split(' ');
@@ -44,7 +42,6 @@ export default async function handler(req, res) {
           .replace(/hotel|hôtel|ibis|novotel|mercure|campanile|kyriad|formule|premiere|classe|b&b|bb/gi, '')
           .replace(/\s+/g, ' ').trim();
       }
-
       function findToken(name) {
         const n = norm(name);
         const match = hotelsList.find(h => {
@@ -56,10 +53,12 @@ export default async function handler(req, res) {
         });
         return match?.property_token || null;
       }
-
       function findRating(name) {
         const n = norm(name);
-        const match = hotelsList.find(h => norm(h.name || '').includes(n) || n.includes(norm(h.name || '')));
+        const match = hotelsList.find(h => {
+          const hn = norm(h.name || '');
+          return hn.includes(n) || n.includes(hn);
+        });
         return match?.overall_rating || null;
       }
 
@@ -108,8 +107,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ properties: [refHotel, ...competitors] });
     }
 
-    // ── ACTION: details ────────────────────────────────────────────────────
+    // ACTION: details
     if (action === 'details') {
+      if (!api_key) return res.status(400).json({ error: 'Clé API manquante' });
       if (!property_token) return res.status(400).json({ error: 'property_token manquant' });
       if (!check_in_date || !check_out_date) return res.status(400).json({ error: 'Dates manquantes' });
 
@@ -135,42 +135,68 @@ export default async function handler(req, res) {
       });
     }
 
-    // ── ACTION: score ── proxy vers Anthropic (évite CORS) ─────────────────
+    // ACTION: score — scoring algorithmique 100% gratuit, basé sur les données Google
     if (action === 'score') {
       if (req.method !== 'POST') return res.status(405).json({ error: 'POST requis' });
-      const body = req.body;
-      if (!body || !body.hotels) return res.status(400).json({ error: 'Paramètres manquants' });
+      const body = req.body || {};
+      if (!body.hotels || !Array.isArray(body.hotels)) return res.status(400).json({ error: 'Paramètres manquants' });
 
-      const prompt = `Score ces hotels. Tableau JSON uniquement sans texte.
-Hotels:
-${body.hotels}
-Format: [{"name":"NOM_EXACT","score":{"rating":N,"location":N,"roomSize":N,"amenities":N,"competitive":N},"details":{"locationDesc":"SANS_APOSTROPHE","roomSizeSqm":N,"advantage":"SANS_APOSTROPHE"}}]
-Baremes: rating 0-30, location 0-25, roomSize 0-15, amenities 0-20 (piscine+6,resto+5,reunion+5,spa+4,parking+2,fitness+2), competitive 0-10. roomSizeSqm 14-50. Noms identiques.`;
+      const scored = body.hotels.map(h => {
+        const googleRating = parseFloat(h.overall_rating) || 3.5;
+        const amenities = h.amenities || [];
+        const name = (h.name || '').toLowerCase();
+        const address = (h.address || '').toLowerCase();
 
-      const ar = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY || 'MISSING', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: 'Tableau JSON uniquement, minifie, sans texte.',
-          messages: [{ role: 'user', content: prompt }]
-        })
+        // RATING: 0-30 pts
+        const ratingScore = Math.min(30, Math.round((googleRating / 5) * 30));
+
+        // LOCATION: 0-25 pts
+        let locationScore = 14;
+        if (/centre|center|gare|historique|coeur|hyper/i.test(name + address)) locationScore = 22;
+        else if (/nord|sud|est|ouest|peripherie|zone|commercial/i.test(name + address)) locationScore = 12;
+        else if (/aeroport|airport|autoroute/i.test(name + address)) locationScore = 8;
+
+        // ROOM SIZE: 0-15 pts
+        let roomScore = 9;
+        if (/formule|premiere classe|etap|\bf1\b/i.test(name)) roomScore = 5;
+        else if (/ibis budget|b&b|bb hotel/i.test(name)) roomScore = 7;
+        else if (/ibis|campanile|kyriad|comfort/i.test(name)) roomScore = 9;
+        else if (/mercure|novotel|best western|holiday inn|crowne/i.test(name)) roomScore = 12;
+        else if (/pullman|hilton|marriott|hyatt|sheraton|sofitel|intercontinental/i.test(name)) roomScore = 15;
+
+        // AMENITIES: 0-20 pts
+        let amenScore = 0;
+        const amStr = amenities.join(' ').toLowerCase();
+        if (/pool|piscine/i.test(amStr)) amenScore += 6;
+        if (/restaurant|dining/i.test(amStr)) amenScore += 5;
+        if (/meeting|reunion|conference/i.test(amStr)) amenScore += 5;
+        if (/spa|wellness/i.test(amStr)) amenScore += 4;
+        if (/parking/i.test(amStr)) amenScore += 2;
+        if (/fitness|gym/i.test(amStr)) amenScore += 2;
+        amenScore = Math.min(20, amenScore);
+
+        // COMPETITIVE: 0-10 pts
+        const compScore = googleRating >= 4.5 ? 9 : googleRating >= 4.0 ? 7 : googleRating >= 3.5 ? 5 : 3;
+
+        // Description emplacement
+        let locationDesc = 'Zone urbaine';
+        if (/centre|center|historique|coeur/i.test(name + address)) locationDesc = 'Centre-ville';
+        else if (/gare/i.test(name + address)) locationDesc = 'Quartier gare';
+        else if (/nord/i.test(name)) locationDesc = 'Zone nord';
+        else if (/sud/i.test(name)) locationDesc = 'Zone sud';
+        else if (/aeroport|airport/i.test(name)) locationDesc = 'Zone aeroport';
+
+        const roomSizeSqm = roomScore <= 5 ? 14 : roomScore <= 7 ? 17 : roomScore <= 9 ? 20 : roomScore <= 12 ? 26 : 32;
+        const advantage = googleRating >= 4.3 ? 'Excellente note clients' : googleRating >= 4.0 ? 'Bonne note clients' : 'Rapport qualite-prix';
+
+        return {
+          name: h.name,
+          score: { rating: ratingScore, location: locationScore, roomSize: roomScore, amenities: amenScore, competitive: compScore },
+          details: { locationDesc, roomSizeSqm, advantage }
+        };
       });
 
-      const ad = await ar.json();
-      let t = (ad.content || []).map(x => x.text || '').join('');
-      t = t.replace(/```json/gi, '').replace(/```/g, '').trim();
-      const fi = t.indexOf('['), li = t.lastIndexOf(']');
-      if (fi !== -1 && li !== -1) t = t.substring(fi, li + 1);
-      t = t.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
-
-      try {
-        const scored = JSON.parse(t);
-        return res.status(200).json({ scored });
-      } catch (e) {
-        return res.status(500).json({ error: 'Scoring invalide', raw: t.substring(0, 200) });
-      }
+      return res.status(200).json({ scored });
     }
 
     return res.status(400).json({ error: `Action inconnue: ${action}` });
