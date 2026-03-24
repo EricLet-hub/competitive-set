@@ -433,7 +433,8 @@ function renderTable(name,ci,co){
         ${h.property_token?'<span class="tag tag-token">✓ Prix OTA</span>':'<span class="tag tag-notoken">Sans prix</span>'}
       </div></td>
       <td>${h.overall_rating?`<strong>${h.overall_rating}</strong>/5`:'—'}</td>
-      <td style="font-size:11px;color:var(--text-muted)">${h.address||'—'}</td>`;
+      <td><span class="price-preview loading" id="price-${i}">…</span></td>
+      <td>${!h.isReference?`<button class="btn-fix" onclick="openFix(${i})">🔍 Corriger</button>`:'—'}</td>`;
     tb.appendChild(tr);
   });
   updateHint();
