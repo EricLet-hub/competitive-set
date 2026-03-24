@@ -340,6 +340,7 @@ function renderTable(name){
         <span class="dot" style="background:${C[i%C.length]}"></span>
         ${h.name||'Hôtel'}
         ${h.isReference?'<span class="tag tag-ref">★ Réf.</span>':''}
+        ${h.hotel_class?`<span class="tag" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold-light)">${h.hotel_class}★</span>`:''}
         ${h.property_token?'<span class="tag tag-token">✓ Prix OTA</span>':'<span class="tag tag-notoken">Sans prix</span>'}
         ${!h.isReference?`<button class="btn-recheck" title="Rechercher ce nom exact pour corriger le token" onclick="recheckToken(${i},this)">🔍</button>`:''}
       </div></td>
@@ -485,7 +486,7 @@ async function runScoring(){
     // Scoring algorithmique gratuit
     const hotelsForScoring=selected.map(h=>{
       const det=detailsMap[h.name]||{};
-      return{name:h.name,overall_rating:h.overall_rating||det.overall_rating||null,address:h.address||null,amenities:det.amenities||h.amenities||[],isReference:h.isReference};
+      return{name:h.name,overall_rating:h.overall_rating||det.overall_rating||null,hotel_class:h.hotel_class||det.hotel_class||null,address:h.address||null,amenities:det.amenities||h.amenities||[],isReference:h.isReference};
     });
     const ar=await fetch('/api/hotels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'score',hotels:hotelsForScoring})});
     const ad=await ar.json();
@@ -639,6 +640,7 @@ function renderCards(){
       <div class="hc-name"><span class="dot" style="background:${h.color}"></span>${h.name}${h.isRef?'<span class="tag tag-ref" style="margin-left:4px">Réf.</span>':''}</div>
       <div class="hc-stat"><span>Prix min</span><span>${h.lowestPrice?h.lowestPrice+'€':'—'}</span></div>
       <div class="hc-stat"><span>Score</span><span>${h.totalScore}/100</span></div>
+      ${h.details.stars?`<div class="hc-stat"><span>Catégorie</span><span>${'★'.repeat(h.details.stars)}</span></div>`:''}
       <div class="hc-stat"><span>Note</span><span>${h.details.googleRating}/5</span></div>
       ${top3?`<div class="hc-prices">${top3}</div>`:''}
       <div class="bar-mini"><div class="bar-fill" style="width:${h.totalScore}%"></div></div>`;
