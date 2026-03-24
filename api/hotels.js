@@ -115,23 +115,36 @@ export default async function handler(req, res) {
 
       const data = await serpFetch({
         engine: 'google_hotels',
+        q: q || 'hotel',
         property_token,
         check_in_date, check_out_date,
         adults: '2', currency: 'EUR', hl: 'fr', gl: 'fr', api_key
       });
 
+      console.log('Details response keys:', Object.keys(data));
+      console.log('Properties count:', data.properties?.length);
+
+      // Les prix peuvent être dans properties[0].prices ou directement dans prices
       const prop = data.properties?.[0] || {};
-      const prices = (prop.prices || []).map(p => ({
+      const rawPrices = prop.prices || data.prices || [];
+      
+      const prices = rawPrices.map(p => ({
         source: p.source,
         price: p.rate_per_night?.extracted_lowest || null
       })).filter(p => p.price);
+
+      // Fallback: si pas de prices, chercher rate_per_night directement
+      if (prices.length === 0 && prop.rate_per_night?.extracted_lowest) {
+        prices.push({ source: 'Google Hotels', price: prop.rate_per_night.extracted_lowest });
+      }
 
       return res.status(200).json({
         name: prop.name || '',
         overall_rating: prop.overall_rating || null,
         lowest_price: prices.length ? Math.min(...prices.map(p => p.price)) : null,
         prices,
-        amenities: prop.amenities || []
+        amenities: prop.amenities || [],
+        debug_keys: Object.keys(data)
       });
     }
 
