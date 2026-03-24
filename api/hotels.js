@@ -108,6 +108,27 @@ export default async function handler(req, res) {
       return res.status(200).json({ properties: [refHotel, ...competitors] });
     }
 
+    // ── ACTION: hotelsearch — recherche directe Google Hotels par nom ──────────
+    if (action === 'hotelsearch') {
+      if (!api_key) return res.status(400).json({ error: 'Clé API manquante' });
+      if (!q) return res.status(400).json({ error: 'Paramètre q manquant' });
+      const ci = check_in_date || getTomorrow(7);
+      const co = check_out_date || getTomorrow(8);
+      const data = await serpFetch({
+        engine: 'google_hotels', q,
+        check_in_date: ci, check_out_date: co,
+        adults: '2', currency: 'EUR', hl: 'fr', gl: 'fr', api_key
+      });
+      const props = (data.properties || []).map(p => ({
+        name: p.name,
+        overall_rating: p.overall_rating || null,
+        hotel_class: p.hotel_class || null,
+        property_token: p.property_token || null
+      }));
+      if (!props.length) return res.status(404).json({ error: `Aucun résultat Google Hotels pour "${q}"` });
+      return res.status(200).json({ properties: props });
+    }
+
     // ── ACTION: details ───────────────────────────────────────────────────────
     if (action === 'details') {
       if (!api_key) return res.status(400).json({ error: 'Clé API manquante' });
