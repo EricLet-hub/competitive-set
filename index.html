@@ -582,7 +582,7 @@ async function doFixUrl(){
 
   if(!token){
     document.getElementById('fixResult').className='fix-result err';
-    document.getElementById('fixResult').textContent='❌ Token introuvable dans cette URL. Vérifiez que c'est bien une URL Google Hotels.';
+    document.getElementById('fixResult').textContent='❌ Token introuvable dans cette URL. Vérifiez que c\'est bien une URL Google Hotels.';
     return;
   }
 
@@ -649,7 +649,7 @@ async function doFix(){
     let tokenToUse = null;
     let foundName = query;
 
-    // Détecter si c'est un token direct (commence par Ch) ou un nom
+    // Détecter si c\'est un token direct (commence par Ch) ou un nom
     if (/^Ch[a-zA-Z0-9+/=]{10,}/.test(query.trim())) {
       // C'est un token direct — l'utiliser tel quel
       tokenToUse = query.trim();
@@ -660,7 +660,7 @@ async function doFix(){
       const data = await r.json();
       if(data.error) throw new Error(data.error);
       const found = data.properties?.[0];
-      if(!found || !found.property_token) throw new Error('Introuvable. Collez directement le token depuis l'URL Google Hotels (ex: ChgIi7Ol...)');
+      if(!found || !found.property_token) throw new Error('Introuvable. Collez directement le token depuis l\'URL Google Hotels (ex: ChgIi7Ol...)');
       tokenToUse = found.property_token;
       foundName = found.name || query;
     }
@@ -726,7 +726,7 @@ async function doFixByUrl(){
 
   if(!token){
     document.getElementById('fixResult').className='fix-result err';
-    document.getElementById('fixResult').textContent='❌ Token introuvable dans cette URL. Vérifiez que c'est bien une URL Google Hotels.';
+    document.getElementById('fixResult').textContent='❌ Token introuvable dans cette URL. Vérifiez que c\'est bien une URL Google Hotels.';
     return;
   }
 
